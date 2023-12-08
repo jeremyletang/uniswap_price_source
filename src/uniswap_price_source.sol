@@ -6,7 +6,6 @@ import "v3-core/contracts/libraries/TickMath.sol";
 import "v3-core/contracts/libraries/FixedPoint96.sol";
 import "v3-core/contracts/libraries/FullMath.sol";
 
-
 interface IERC20 {
     function decimals() external view returns (uint256);
 }
@@ -20,7 +19,11 @@ contract AUniswapPriceSource {
     IUniswapV3Pool constant usdtWethPool = IUniswapV3Pool(0x4e68Ccd3E89f51C3074ca5072bbAC773960dFa36);
     IUniswapV3Pool constant usdcWethPool = IUniswapV3Pool(0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8);
 
-    function getPriceFromPool(IUniswapV3Pool pool, uint32 twapInterval, address quoteToken) public view returns (uint256) {
+    function getPriceFromPool(IUniswapV3Pool pool, uint32 twapInterval, address quoteToken)
+        public
+        view
+        returns (uint256)
+    {
         uint256 decimals = getAdjustedDecimals(pool, quoteToken);
         return getActualPrice(getPriceX96FromSqrtPriceX96(getSqrtTwapX96(pool, twapInterval, quoteToken)), decimals);
     }
@@ -55,7 +58,7 @@ contract AUniswapPriceSource {
     /// @return price The price of ETH in terms of USDC with 18 decimals
     function ethPriceInUsdc() public view returns (uint256) {
         return getPriceFromPool(usdcWethPool, 30 minutes, USDC);
-   }
+    }
 
     /// @notice Get the price of a token from an USDC/TOKENX pool
     /// @return price The price of the token in terms of USDC with 18 decimals
@@ -93,7 +96,8 @@ contract AUniswapPriceSource {
         returns (uint160 sqrtPriceX96)
     {
         require(
-            pool.token0() == quoteToken || pool.token1() == quoteToken, "at least one token from the pool must be the quoted token"
+            pool.token0() == quoteToken || pool.token1() == quoteToken,
+            "at least one token from the pool must be the quoted token"
         );
         require(twapInterval > 0, "twap interval must be > 0");
         uint32[] memory secondsAgos = new uint32[](2);
