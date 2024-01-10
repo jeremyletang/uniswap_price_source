@@ -10,7 +10,7 @@ interface IERC20 {
     function decimals() external view returns (uint256);
 }
 
-contract AUniswapPriceSource {
+contract UniswapPriceSource {
     // always needs the WETH, USDT, and USDT/WETH pool address
     address constant WETH = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     address constant USDT = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
@@ -18,6 +18,7 @@ contract AUniswapPriceSource {
 
     IUniswapV3Pool constant usdtWethPool = IUniswapV3Pool(0x4e68Ccd3E89f51C3074ca5072bbAC773960dFa36);
     IUniswapV3Pool constant usdcWethPool = IUniswapV3Pool(0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8);
+    IUniswapV3Pool constant usdtUsdcPool = IUniswapV3Pool(0x3416cF6C708Da44DB2624D63ea0AAef7113527C6);
 
     function getPriceFromPool(IUniswapV3Pool pool, uint32 twapInterval, address quoteToken)
         public
@@ -31,21 +32,31 @@ contract AUniswapPriceSource {
     /// @notice Get the price of a token in terms of USDT
     /// @param pool The Uniswap v3 pool to get the price of the token in terms of USDT
     /// @param twapInterval The time interval in seconds to get the twap over
+    /// @param x A multiplier to the resulting price
     /// @return price The price of the token in terms of USDT with 18 decimals
-    function priceFromEthPoolInUsdt(IUniswapV3Pool pool, uint32 twapInterval) public view returns (uint256) {
+    function priceFromEthPoolInUsdt(IUniswapV3Pool pool, uint32 twapInterval, uint256 x)
+        public
+        view
+        returns (uint256)
+    {
         // get the price from the eth pool first
         uint256 tokenEthPrice = priceFromWethPool(pool, twapInterval);
-        return (ethPriceInUsdt() * tokenEthPrice) / 10 ** 18;
+        return ((ethPriceInUsdt() * tokenEthPrice) / 10 ** 18) * x;
     }
 
     /// @notice Get the price of a token in terms of USDC
     /// @param pool The Uniswap v3 pool to get the price of the token in terms of USDC
     /// @param twapInterval The time interval in seconds to get the twap over
+    /// @param x A multiplier to the resulting price
     /// @return price The price of the token in terms of USDC with 18 decimals
-    function priceFromEthPoolInUsdc(IUniswapV3Pool pool, uint32 twapInterval) public view returns (uint256) {
+    function priceFromEthPoolInUsdc(IUniswapV3Pool pool, uint32 twapInterval, uint256 x)
+        public
+        view
+        returns (uint256)
+    {
         // get the price from the eth pool first
         uint256 tokenEthPrice = priceFromWethPool(pool, twapInterval);
-        return (ethPriceInUsdc() * tokenEthPrice) / 10 ** 18;
+        return ((ethPriceInUsdc() * tokenEthPrice) / 10 ** 18) * x;
     }
 
     /// @notice Get the price of ETH in terms of USDT
@@ -61,17 +72,21 @@ contract AUniswapPriceSource {
     }
 
     /// @notice Get the price of a token from an USDC/TOKENX pool
+    /// @param pool The Uniswap v3 pool to get the price of the token in terms of USDC
+    /// @param twapInterval The time interval in seconds to get the twap over
+    /// @param x A multiplier to the resulting price
     /// @return price The price of the token in terms of USDC with 18 decimals
-    function priceFromUsdcPool(IUniswapV3Pool pool, uint32 twapInterval) public view returns (uint256) {
+    function priceFromUsdcPool(IUniswapV3Pool pool, uint32 twapInterval, uint256 x) public view returns (uint256) {
         require(pool.token0() == USDC || pool.token1() == USDC, "at least one token from the pool must be USDC");
-        return getPriceFromPool(pool, twapInterval, USDC);
+        return (getPriceFromPool(pool, twapInterval, USDC) * x);
     }
 
     /// @notice Get the price of a token from an USDT/TOKENX pool
+    /// @param x A multiplier to the resulting price
     /// @return price The price of the token in terms of USDT with 18 decimals
-    function priceFromUsdtPool(IUniswapV3Pool pool, uint32 twapInterval) public view returns (uint256) {
+    function priceFromUsdtPool(IUniswapV3Pool pool, uint32 twapInterval, uint256 x) public view returns (uint256) {
         require(pool.token0() == USDT || pool.token1() == USDT, "at least one token from the pool must be USDT");
-        return getPriceFromPool(pool, twapInterval, USDT);
+        return (getPriceFromPool(pool, twapInterval, USDT) * x);
     }
 
     /// @notice Get the price of a token in terms of WETH
@@ -81,6 +96,48 @@ contract AUniswapPriceSource {
     function priceFromWethPool(IUniswapV3Pool pool, uint32 twapInterval) public view returns (uint256) {
         require(pool.token0() == WETH || pool.token1() == WETH, "at least one token from the pool must be WETH");
         return getPriceFromPool(pool, twapInterval, WETH);
+    }
+
+    /// @notice Get the price of a token in terms of USDC
+    /// @param pool The Uniswap v3 pool to get the price of the token in terms of USDC
+    /// @param twapInterval The time interval in seconds to get the twap over
+    /// @param x A multiplier to the resulting price
+    /// @return price The price of the token in terms of USDC with 18 decimals
+    function priceFromUsdtPoolInUsdc(IUniswapV3Pool pool, uint32 twapInterval, uint256 x)
+        public
+        view
+        returns (uint256)
+    {
+        // get the price from the usdt pool first
+        uint256 tokenEthPrice = priceFromUsdtPool(pool, twapInterval, 1);
+        return ((usdtPriceInUsdc() * tokenEthPrice) / 10 ** 18) * x;
+    }
+
+    /// @notice Get the price of a token in terms of USDT
+    /// @param pool The Uniswap v3 pool to get the price of the token in terms of USDT
+    /// @param twapInterval The time interval in seconds to get the twap over
+    /// @param x A multiplier to the resulting price
+    /// @return price The price of the token in terms of USDT with 18 decimals
+    function priceFromUsdcPoolInUsdt(IUniswapV3Pool pool, uint32 twapInterval, uint256 x)
+        public
+        view
+        returns (uint256)
+    {
+        // get the price from the usdc pool first
+        uint256 tokenEthPrice = priceFromUsdcPool(pool, twapInterval, 1);
+        return ((usdcPriceInUsdt() * tokenEthPrice) / 10 ** 18) * x;
+    }
+
+    /// @notice Get the price of USDT in terms of USDC
+    /// @return price The price of USDT in terms of USDC with 18 decimals
+    function usdtPriceInUsdc() public view returns (uint256) {
+        return getPriceFromPool(usdtUsdcPool, 30 minutes, USDC);
+    }
+
+    /// @notice Get the price of USDC in terms of USDT
+    /// @return price The price of USDC in terms of USDT with 18 decimals
+    function usdcPriceInUsdt() public view returns (uint256) {
+        return getPriceFromPool(usdtUsdcPool, 30 minutes, USDT);
     }
 
     // helper functions
