@@ -1,66 +1,36 @@
-## Foundry
+# Uniswap Price Source Contract
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+This Solidity smart contract provides a set of functions to retrieve prices from Uniswap V3 pools, specifically targeting prices in terms of USDT, USDC, and WETH. The contract is designed to handle various scenarios, including getting prices from different pools and applying multipliers.
 
-Foundry consists of:
+## Prerequisites
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- Solidity version 0.7.6
+- Ethereum network supporting Uniswap V3 contracts
+- External dependencies: `v3-core` contracts (imported in the code)
 
-## Documentation
+## Contract Overview
 
-https://book.getfoundry.sh/
+The contract includes the following key functions:
+
+- `getPriceFromPool`: Get the price of a token in terms of a specified quote token.
+- `priceFromEthPoolInUsdt` and `priceFromEthPoolInUsdc`: Get the price of a token in terms of USDT or USDC, with an optional multiplier.
+- `ethPriceInUsdt` and `ethPriceInUsdc`: Get the price of ETH in terms of USDT or USDC.
+- `priceFromUsdcPool` and `priceFromUsdtPool`: Get the price of a token from an USDC or USDT pool, respectively.
+- `priceFromWethPool`: Get the price of a token in terms of WETH.
+- `priceFromUsdtPoolInUsdc` and `priceFromUsdcPoolInUsdt`: Get the price of a token in terms of USDC or USDT from a USDT or USDC pool, respectively.
+- `usdtPriceInUsdc` and `usdcPriceInUsdt`: Get the price of USDT in terms of USDC or vice versa.
 
 ## Usage
 
-### Build
+1. Deploy the contract on an Ethereum network.
+2. Call the desired functions based on your price calculation needs.
 
-```shell
-$ forge build
-```
+Note: Ensure the contract has sufficient permissions and funds to interact with the Uniswap V3 pools.
 
-### Test
+## License
 
-```shell
-$ forge test
-```
+This contract is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-### Format
+## Disclaimer
 
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+This contract is provided as-is without any warranties. Use it at your own risk
